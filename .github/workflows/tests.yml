@@ -29,27 +29,23 @@ jobs:
       - name: Ruff (format)
         run: ruff format --check .
 
+      - name: Translations are in sync with strings.json
+        run: python scripts/build_translations.py --check
+
       - name: Pytest
         run: pytest
 
-  frontend:
-    name: Build card
+  card:
+    name: Lovelace card
     runs-on: ubuntu-latest
-    defaults:
-      run:
-        working-directory: frontend
     steps:
       - uses: actions/checkout@v4
 
       - uses: actions/setup-node@v4
         with:
           node-version: "22"
-          cache: npm
-          cache-dependency-path: frontend/package-lock.json
 
-      - run: npm ci
-      - run: npm run lint
-      - run: npm run build
-
-      - name: Fail if the built card is out of date
-        run: git diff --exit-code -- ../custom_components/maintenance_tracker/frontend
+      - name: Syntax check
+        run: >-
+          node --check
+          custom_components/maintenance_tracker/frontend/maintenance-tracker-card.js

@@ -1,0 +1,48 @@
+add_cycles:
+  target:
+    entity:
+      integration: maintenance_tracker
+      domain: sensor
+  fields:
+    count:
+      required: false
+      default: 1
+      example: 1
+      selector:
+        number:
+          min: -1000
+          max: 1000
+          step: 1
+          mode: box
+
+set_cycles:
+  target:
+    entity:
+      integration: maintenance_tracker
+      domain: sensor
+  fields:
+    count:
+      required: true
+      example: 250
+      selector:
+        number:
+          min: 0
+          max: 1000000
+          step: 1
+          mode: box
+
+mark_serviced:
+  target:
+    entity:
+      integration: maintenance_tracker
+      domain: sensor
+  fields:
+    note:
+      required: false
+      example: Filter replaced, part #12345
+      selector:
+        text:
+    serviced_at:
+      required: false
+      selector:
+        datetime:

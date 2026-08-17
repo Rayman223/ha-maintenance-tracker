@@ -35,4 +35,7 @@ convention = "pep257"
 [tool.pytest.ini_options]
 testpaths = ["tests"]
 asyncio_mode = "auto"
+# Without this, pytest only puts `tests/` on sys.path, and the test modules
+# cannot import `custom_components.maintenance_tracker`.
+pythonpath = ["."]
 addopts = "-q --cov=custom_components/maintenance_tracker --cov-report=term-missing"

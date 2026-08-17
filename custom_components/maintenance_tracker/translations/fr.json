@@ -1,0 +1,203 @@
+{
+  "config": {
+    "step": {
+      "user": {
+        "title": "Ajouter un appareil",
+        "description": "Donnez un nom à l'appareil, puis choisissez comment ses cycles sont comptés. Vous pourrez ajouter des entretiens une fois l'appareil créé.",
+        "data": {
+          "name": "Nom",
+          "detection_mode": "Comptage des cycles"
+        },
+        "data_description": {
+          "name": "Par exemple : Machine à laver, Cafetière, Tondeuse.",
+          "detection_mode": "Le comptage automatique surveille une entité que vous avez déjà, comme la puissance remontée par une prise connectée."
+        }
+      },
+      "detection": {
+        "title": "Détection automatique des cycles",
+        "description": "Un cycle est compté lorsque l'entité source reste active suffisamment longtemps, puis redevient inactive pendant tout le délai de grâce.",
+        "data": {
+          "source_entity": "Entité source",
+          "power_threshold": "Actif au-dessus de",
+          "active_states": "États actifs",
+          "min_active_duration": "Durée minimale d'un cycle",
+          "idle_debounce": "Délai de grâce avant fin de cycle"
+        },
+        "data_description": {
+          "source_entity": "L'entité qui révèle si l'appareil fonctionne.",
+          "power_threshold": "L'appareil est considéré en marche tant que la source dépasse cette valeur, dans sa propre unité.",
+          "active_states": "États signifiant que l'appareil fonctionne, par exemple `on`, `run` ou `washing`.",
+          "min_active_duration": "Les activités plus courtes sont ignorées, pour qu'une consommation de veille ne soit jamais comptée comme un cycle.",
+          "idle_debounce": "Durée pendant laquelle l'appareil doit rester inactif pour que le cycle soit considéré terminé. Absorbe les pauses, comme l'essorage."
+        }
+      }
+    },
+    "abort": {
+      "already_configured": "Un appareil portant ce nom existe déjà."
+    }
+  },
+  "options": {
+    "step": {
+      "init": {
+        "title": "Comptage des cycles",
+        "data": {
+          "detection_mode": "Comptage des cycles"
+        },
+        "data_description": {
+          "detection_mode": "Le comptage automatique surveille une entité que vous avez déjà, comme la puissance remontée par une prise connectée."
+        }
+      },
+      "detection": {
+        "title": "Détection automatique des cycles",
+        "description": "Un cycle est compté lorsque l'entité source reste active suffisamment longtemps, puis redevient inactive pendant tout le délai de grâce.",
+        "data": {
+          "source_entity": "Entité source",
+          "power_threshold": "Actif au-dessus de",
+          "active_states": "États actifs",
+          "min_active_duration": "Durée minimale d'un cycle",
+          "idle_debounce": "Délai de grâce avant fin de cycle"
+        },
+        "data_description": {
+          "source_entity": "L'entité qui révèle si l'appareil fonctionne.",
+          "power_threshold": "L'appareil est considéré en marche tant que la source dépasse cette valeur, dans sa propre unité.",
+          "active_states": "États signifiant que l'appareil fonctionne, par exemple `on`, `run` ou `washing`.",
+          "min_active_duration": "Les activités plus courtes sont ignorées, pour qu'une consommation de veille ne soit jamais comptée comme un cycle.",
+          "idle_debounce": "Durée pendant laquelle l'appareil doit rester inactif pour que le cycle soit considéré terminé. Absorbe les pauses, comme l'essorage."
+        }
+      }
+    }
+  },
+  "config_subentries": {
+    "task": {
+      "title": "Entretien",
+      "entry_type": "Entretien",
+      "initiate_flow": {
+        "user": "Ajouter un entretien",
+        "reconfigure": "Modifier l'entretien"
+      },
+      "step": {
+        "user": {
+          "title": "Ajouter un entretien",
+          "description": "Renseignez au moins une limite. L'entretien devient dû dès que la première d'entre elles est atteinte.",
+          "data": {
+            "name": "Nom",
+            "limit_cycles": "Tous les N cycles",
+            "limit_hours": "Toutes les N heures de fonctionnement",
+            "limit_days": "Tous les N jours",
+            "warn_ratio": "Alerter à partir de",
+            "notify": "Envoyer une notification à l'échéance"
+          },
+          "data_description": {
+            "name": "Par exemple : Nettoyer le tambour, Détartrer, Remplacer le filtre.",
+            "limit_cycles": "Laissez à 0 pour ignorer le nombre de cycles.",
+            "limit_hours": "Laissez à 0 pour ignorer le temps de fonctionnement.",
+            "limit_days": "Laissez à 0 pour ignorer le calendrier.",
+            "warn_ratio": "Pourcentage de la limite à partir duquel l'entretien passe en « bientôt dû ».",
+            "notify": "Crée une notification Home Assistant dès que l'entretien devient dû."
+          }
+        },
+        "reconfigure": {
+          "title": "Modifier l'entretien",
+          "description": "Renseignez au moins une limite. L'entretien devient dû dès que la première d'entre elles est atteinte.",
+          "data": {
+            "name": "Nom",
+            "limit_cycles": "Tous les N cycles",
+            "limit_hours": "Toutes les N heures de fonctionnement",
+            "limit_days": "Tous les N jours",
+            "warn_ratio": "Alerter à partir de",
+            "notify": "Envoyer une notification à l'échéance"
+          },
+          "data_description": {
+            "name": "Par exemple : Nettoyer le tambour, Détartrer, Remplacer le filtre.",
+            "limit_cycles": "Laissez à 0 pour ignorer le nombre de cycles.",
+            "limit_hours": "Laissez à 0 pour ignorer le temps de fonctionnement.",
+            "limit_days": "Laissez à 0 pour ignorer le calendrier.",
+            "warn_ratio": "Pourcentage de la limite à partir duquel l'entretien passe en « bientôt dû ».",
+            "notify": "Crée une notification Home Assistant dès que l'entretien devient dû."
+          }
+        }
+      },
+      "error": {
+        "no_limit": "Renseignez au moins une limite, sans quoi l'entretien ne pourra jamais devenir dû."
+      },
+      "abort": {
+        "reconfigure_successful": "Entretien mis à jour."
+      }
+    }
+  },
+  "selector": {
+    "detection_mode": {
+      "options": {
+        "none": "Manuel uniquement — j'appuie sur un bouton ou j'appelle un service",
+        "threshold": "Automatique — au-dessus d'un seuil numérique (puissance, courant…)",
+        "state": "Automatique — tant que l'entité est dans un état donné"
+      }
+    }
+  },
+  "entity": {
+    "sensor": {
+      "cycles": { "name": "Cycles" },
+      "runtime": { "name": "Temps de fonctionnement" },
+      "task_status": {
+        "name": "{task}",
+        "state": {
+          "ok": "OK",
+          "due_soon": "Bientôt dû",
+          "overdue": "À faire"
+        }
+      },
+      "task_progress": { "name": "Progression {task}" },
+      "task_last_service": { "name": "Dernier entretien {task}" }
+    },
+    "binary_sensor": {
+      "maintenance_required": { "name": "Entretien requis" },
+      "cycle_running": { "name": "Cycle en cours" },
+      "task_due": { "name": "{task} dû" }
+    },
+    "button": {
+      "register_cycle": { "name": "Enregistrer un cycle" },
+      "mark_serviced": { "name": "{task} effectué" }
+    }
+  },
+  "services": {
+    "add_cycles": {
+      "name": "Ajouter des cycles",
+      "description": "Ajoute des cycles au compteur d'un appareil. Utilisez une valeur négative pour corriger une erreur de comptage.",
+      "fields": {
+        "count": {
+          "name": "Nombre",
+          "description": "Nombre de cycles à ajouter."
+        }
+      }
+    },
+    "set_cycles": {
+      "name": "Définir les cycles",
+      "description": "Fixe le compteur de cycles d'un appareil à une valeur absolue, par exemple pour l'aligner sur un compteur remonté par l'appareil lui-même.",
+      "fields": {
+        "count": {
+          "name": "Nombre",
+          "description": "Nouvelle valeur du compteur."
+        }
+      }
+    },
+    "mark_serviced": {
+      "name": "Marquer comme effectué",
+      "description": "Enregistre un entretien comme réalisé : ses compteurs repartent des totaux actuels de l'appareil.",
+      "fields": {
+        "note": {
+          "name": "Note",
+          "description": "Texte libre conservé avec l'historique, par exemple la pièce remplacée."
+        },
+        "serviced_at": {
+          "name": "Effectué le",
+          "description": "Date et heure réelles de l'entretien. Par défaut, maintenant."
+        }
+      }
+    }
+  },
+  "exceptions": {
+    "wrong_target": {
+      "message": "L'action {service} ne s'applique pas à {entity_id}. Ciblez plutôt l'entité « {expected} » de l'appareil."
+    }
+  }
+}

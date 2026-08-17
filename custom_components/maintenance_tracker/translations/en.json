@@ -1,0 +1,221 @@
+{
+  "config": {
+    "step": {
+      "user": {
+        "title": "Add an appliance",
+        "description": "Give the appliance a name, then choose how its cycles are counted. You can add maintenance tasks once it is created.",
+        "data": {
+          "name": "Name",
+          "detection_mode": "Cycle counting"
+        },
+        "data_description": {
+          "name": "For example: Washing machine, Coffee maker, Lawn mower.",
+          "detection_mode": "Automatic counting watches an entity you already have, such as the power reported by a smart plug."
+        }
+      },
+      "detection": {
+        "title": "Automatic cycle detection",
+        "description": "A cycle is counted when the source entity stays active long enough, then goes idle for the whole grace period.",
+        "data": {
+          "source_entity": "Source entity",
+          "power_threshold": "Active above",
+          "active_states": "Active states",
+          "min_active_duration": "Minimum cycle duration",
+          "idle_debounce": "Grace period before end of cycle"
+        },
+        "data_description": {
+          "source_entity": "The entity that reveals whether the appliance is running.",
+          "power_threshold": "The appliance counts as running while the source reads above this value, in the source's own unit.",
+          "active_states": "States that mean the appliance is running, for example `on`, `run` or `washing`.",
+          "min_active_duration": "Shorter bursts of activity are ignored, so standby draw is never counted as a cycle.",
+          "idle_debounce": "How long the appliance must stay idle before the cycle is considered finished. Covers pauses such as the spin cycle."
+        }
+      }
+    },
+    "abort": {
+      "already_configured": "An appliance with this name already exists."
+    }
+  },
+  "options": {
+    "step": {
+      "init": {
+        "title": "Cycle counting",
+        "data": {
+          "detection_mode": "Cycle counting"
+        },
+        "data_description": {
+          "detection_mode": "Automatic counting watches an entity you already have, such as the power reported by a smart plug."
+        }
+      },
+      "detection": {
+        "title": "Automatic cycle detection",
+        "description": "A cycle is counted when the source entity stays active long enough, then goes idle for the whole grace period.",
+        "data": {
+          "source_entity": "Source entity",
+          "power_threshold": "Active above",
+          "active_states": "Active states",
+          "min_active_duration": "Minimum cycle duration",
+          "idle_debounce": "Grace period before end of cycle"
+        },
+        "data_description": {
+          "source_entity": "The entity that reveals whether the appliance is running.",
+          "power_threshold": "The appliance counts as running while the source reads above this value, in the source's own unit.",
+          "active_states": "States that mean the appliance is running, for example `on`, `run` or `washing`.",
+          "min_active_duration": "Shorter bursts of activity are ignored, so standby draw is never counted as a cycle.",
+          "idle_debounce": "How long the appliance must stay idle before the cycle is considered finished. Covers pauses such as the spin cycle."
+        }
+      }
+    }
+  },
+  "config_subentries": {
+    "task": {
+      "title": "Maintenance task",
+      "entry_type": "Maintenance task",
+      "initiate_flow": {
+        "user": "Add a maintenance task",
+        "reconfigure": "Edit maintenance task"
+      },
+      "step": {
+        "user": {
+          "title": "Add a maintenance task",
+          "description": "Set at least one limit. The task falls due as soon as the first of them is reached.",
+          "data": {
+            "name": "Name",
+            "limit_cycles": "Every N cycles",
+            "limit_hours": "Every N running hours",
+            "limit_days": "Every N days",
+            "warn_ratio": "Warn from",
+            "notify": "Send a notification when due"
+          },
+          "data_description": {
+            "name": "For example: Clean the drum, Descale, Replace the filter.",
+            "limit_cycles": "Leave at 0 to ignore the cycle count.",
+            "limit_hours": "Leave at 0 to ignore running time.",
+            "limit_days": "Leave at 0 to ignore the calendar.",
+            "warn_ratio": "Percentage of the limit at which the task turns to “due soon”.",
+            "notify": "Creates a Home Assistant notification the moment the task becomes due."
+          }
+        },
+        "reconfigure": {
+          "title": "Edit maintenance task",
+          "description": "Set at least one limit. The task falls due as soon as the first of them is reached.",
+          "data": {
+            "name": "Name",
+            "limit_cycles": "Every N cycles",
+            "limit_hours": "Every N running hours",
+            "limit_days": "Every N days",
+            "warn_ratio": "Warn from",
+            "notify": "Send a notification when due"
+          },
+          "data_description": {
+            "name": "For example: Clean the drum, Descale, Replace the filter.",
+            "limit_cycles": "Leave at 0 to ignore the cycle count.",
+            "limit_hours": "Leave at 0 to ignore running time.",
+            "limit_days": "Leave at 0 to ignore the calendar.",
+            "warn_ratio": "Percentage of the limit at which the task turns to “due soon”.",
+            "notify": "Creates a Home Assistant notification the moment the task becomes due."
+          }
+        }
+      },
+      "error": {
+        "no_limit": "Set at least one limit, otherwise the task can never fall due."
+      },
+      "abort": {
+        "reconfigure_successful": "Maintenance task updated."
+      }
+    }
+  },
+  "selector": {
+    "detection_mode": {
+      "options": {
+        "none": "Manual only — I press a button or call a service",
+        "threshold": "Automatic — above a numeric threshold (power, current…)",
+        "state": "Automatic — while the entity is in a given state"
+      }
+    }
+  },
+  "entity": {
+    "sensor": {
+      "cycles": {
+        "name": "Cycles"
+      },
+      "runtime": {
+        "name": "Runtime"
+      },
+      "task_status": {
+        "name": "{task}",
+        "state": {
+          "ok": "OK",
+          "due_soon": "Due soon",
+          "overdue": "Due"
+        }
+      },
+      "task_progress": {
+        "name": "{task} progress"
+      },
+      "task_last_service": {
+        "name": "{task} last service"
+      }
+    },
+    "binary_sensor": {
+      "maintenance_required": {
+        "name": "Maintenance required"
+      },
+      "cycle_running": {
+        "name": "Cycle running"
+      },
+      "task_due": {
+        "name": "{task} due"
+      }
+    },
+    "button": {
+      "register_cycle": {
+        "name": "Register a cycle"
+      },
+      "mark_serviced": {
+        "name": "{task} serviced"
+      }
+    }
+  },
+  "services": {
+    "add_cycles": {
+      "name": "Add cycles",
+      "description": "Adds cycles to an appliance's counter. Use a negative value to correct a miscount.",
+      "fields": {
+        "count": {
+          "name": "Count",
+          "description": "Number of cycles to add."
+        }
+      }
+    },
+    "set_cycles": {
+      "name": "Set cycles",
+      "description": "Sets an appliance's cycle counter to an absolute value, for instance to match a counter the appliance itself reports.",
+      "fields": {
+        "count": {
+          "name": "Count",
+          "description": "New value of the counter."
+        }
+      }
+    },
+    "mark_serviced": {
+      "name": "Mark as serviced",
+      "description": "Records a maintenance task as done: its counters restart from the appliance's current totals.",
+      "fields": {
+        "note": {
+          "name": "Note",
+          "description": "Free text kept with the service record, such as the part that was replaced."
+        },
+        "serviced_at": {
+          "name": "Serviced at",
+          "description": "When the maintenance was actually carried out. Defaults to now."
+        }
+      }
+    }
+  },
+  "exceptions": {
+    "wrong_target": {
+      "message": "The {service} action does not apply to {entity_id}. Target the appliance's “{expected}” entity instead."
+    }
+  }
+}
