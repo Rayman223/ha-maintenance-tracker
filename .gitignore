@@ -17,5 +17,7 @@ frontend/dist/
 .vscode/
 
 # Local tooling artefacts injected into the workspace, not part of the project.
-.claude/
+# Project skills are versioned; everything else under .claude/ is local noise.
+.claude/*
+!.claude/skills/
 .mcp.json
