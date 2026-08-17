@@ -210,6 +210,9 @@ English wording lives in `strings.json`; `translations/en.json` is generated
 from it by `scripts/build_translations.py`. Other languages, such as
 `translations/fr.json`, are written by hand.
 
+The brand icon is generated too — `python scripts/build_brand_assets.py`
+redraws `custom_components/maintenance_tracker/brand/` at both required sizes.
+
 ## License
 
 [MIT](LICENSE)
