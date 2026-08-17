@@ -1,0 +1,13 @@
+{
+  "domain": "maintenance_tracker",
+  "name": "Maintenance Tracker",
+  "codeowners": ["@rayman223"],
+  "config_flow": true,
+  "dependencies": ["http", "frontend"],
+  "documentation": "https://github.com/rayman223/ha-maintenance-tracker",
+  "integration_type": "hub",
+  "iot_class": "calculated",
+  "issue_tracker": "https://github.com/rayman223/ha-maintenance-tracker/issues",
+  "requirements": [],
+  "version": "0.1.0"
+}

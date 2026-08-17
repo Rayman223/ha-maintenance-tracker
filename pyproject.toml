@@ -1,0 +1,38 @@
+[project]
+name = "ha-maintenance-tracker"
+version = "0.1.0"
+description = "Home Assistant integration to track appliance maintenance by cycles, runtime and calendar."
+readme = "README.md"
+requires-python = ">=3.13"
+license = { text = "MIT" }
+
+[tool.ruff]
+target-version = "py313"
+line-length = 88
+src = ["custom_components", "tests"]
+
+[tool.ruff.lint]
+select = [
+    "E", "F", "W",      # pycodestyle / pyflakes
+    "I",                # isort
+    "UP",               # pyupgrade
+    "B",                # bugbear
+    "SIM",              # simplify
+    "RUF",              # ruff-specific
+    "ASYNC",            # async correctness
+    "D",                # pydocstyle
+    "PT",               # pytest style
+    "TID",              # tidy imports
+]
+ignore = ["D203", "D213"]
+
+[tool.ruff.lint.per-file-ignores]
+"tests/*" = ["D100", "D103"]
+
+[tool.ruff.lint.pydocstyle]
+convention = "pep257"
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+asyncio_mode = "auto"
+addopts = "-q --cov=custom_components/maintenance_tracker --cov-report=term-missing"
