@@ -9,7 +9,7 @@
 
 const CARD_TAG = "maintenance-tracker-card";
 const EDITOR_TAG = "maintenance-tracker-card-editor";
-const VERSION = "0.1.0";
+const VERSION = "0.1.1";
 
 const PLATFORM = "maintenance_tracker";
 const TASK_KEY = "task_status";
