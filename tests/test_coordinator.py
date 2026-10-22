@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 from collections.abc import Awaitable, Callable
-from datetime import timedelta
+from datetime import datetime, timedelta
 
 import pytest
 from custom_components.maintenance_tracker.const import (
@@ -265,3 +265,30 @@ async def test_removing_a_task_drops_its_state(
 
     assert subentry_id not in _coordinator(manual_entry).data.tasks
     assert hass.states.get("sensor.washing_machine_clean_the_drum") is None
+
+
+async def test_mark_serviced_accepts_a_naive_datetime(
+    hass: HomeAssistant,
+    manual_entry: MockConfigEntry,
+    setup_integration: Callable[[MockConfigEntry], Awaitable[None]],
+) -> None:
+    """A `serviced_at` coming from a service call carries no timezone.
+
+    Mixing it with the aware "now" used to raise inside the refresh, which took
+    every entity of the appliance down with it.
+    """
+    await setup_integration(manual_entry)
+    coordinator = _coordinator(manual_entry)
+    subentry_id = _only_task(manual_entry)
+
+    await coordinator.async_mark_serviced(
+        subentry_id, serviced_at=datetime(2025, 1, 1, 8, 0, 0)
+    )
+    await hass.async_block_till_done()
+
+    progress = coordinator.data.progress[subentry_id]
+    assert progress.last_service is not None
+    assert progress.last_service.tzinfo is not None
+    assert (
+        hass.states.get("sensor.washing_machine_clean_the_drum").state != "unavailable"
+    )

@@ -11,20 +11,47 @@ const CARD_TAG = "maintenance-tracker-card";
 const EDITOR_TAG = "maintenance-tracker-card-editor";
 const VERSION = "0.1.0";
 
+const PLATFORM = "maintenance_tracker";
+const TASK_KEY = "task_status";
+const COUNTER_KEY = "cycles";
+
 const STATUS_ORDER = { overdue: 0, due_soon: 1, ok: 2 };
 const STATUS_LABELS = {
   overdue: "Due",
   due_soon: "Due soon",
   ok: "OK",
+  unavailable: "Unavailable",
+  unknown: "Unknown",
 };
 
-/** A task sensor is recognised by the attributes the integration attaches. */
-const isTaskSensor = (state) =>
-  state &&
-  state.entity_id.startsWith("sensor.") &&
-  state.attributes &&
-  typeof state.attributes.task === "string" &&
-  typeof state.attributes.progress === "number";
+const isUnavailable = (state) =>
+  !state || state.state === "unavailable" || state.state === "unknown";
+
+/**
+ * Entities are found through the registry rather than by sniffing attributes:
+ * an unavailable entity keeps its registry entry but loses every attribute, and
+ * a card that vanishes exactly when something is wrong is the opposite of
+ * useful.
+ */
+const registryIds = (hass, translationKey) =>
+  Object.values(hass.entities || {})
+    .filter(
+      (entry) =>
+        entry.platform === PLATFORM && entry.translation_key === translationKey,
+    )
+    .map((entry) => entry.entity_id);
+
+/** Fallback for the rare case where the registry is not exposed to the card. */
+const sniffedTaskIds = (hass) =>
+  Object.values(hass.states)
+    .filter(
+      (state) =>
+        state.entity_id.startsWith("sensor.") &&
+        state.attributes &&
+        typeof state.attributes.task === "string" &&
+        typeof state.attributes.progress === "number",
+    )
+    .map((state) => state.entity_id);
 
 /** Format a "x left" hint from whichever limit is closest to being reached. */
 const remainingLabel = (attrs) => {
@@ -71,9 +98,8 @@ class MaintenanceTrackerCard extends HTMLElement {
     return document.createElement(EDITOR_TAG);
   }
 
-  static getStubConfig(hass) {
-    const first = Object.values(hass.states).find(isTaskSensor);
-    return { type: `custom:${CARD_TAG}`, device: first ? undefined : null };
+  static getStubConfig() {
+    return { type: `custom:${CARD_TAG}` };
   }
 
   setConfig(config) {
@@ -106,29 +132,30 @@ class MaintenanceTrackerCard extends HTMLElement {
   /** Resolve which task sensors this card shows, in "most urgent first" order. */
   _tasks() {
     const hass = this._hass;
-    let states;
+    const registry = hass.entities || {};
+    let ids;
 
     if (this._config.entities) {
-      states = this._config.entities
-        .map((entityId) => hass.states[entityId])
-        .filter(isTaskSensor);
+      ids = this._config.entities;
     } else {
-      states = Object.values(hass.states).filter(isTaskSensor);
+      ids = registryIds(hass, TASK_KEY);
+      if (!ids.length) ids = sniffedTaskIds(hass);
       if (this._config.device) {
-        const registry = hass.entities || {};
-        states = states.filter(
-          (state) =>
-            registry[state.entity_id] &&
-            registry[state.entity_id].device_id === this._config.device,
+        ids = ids.filter(
+          (id) => registry[id] && registry[id].device_id === this._config.device,
         );
       }
     }
 
-    return states.sort((a, b) => {
-      const byStatus = (STATUS_ORDER[a.state] ?? 9) - (STATUS_ORDER[b.state] ?? 9);
-      if (byStatus !== 0) return byStatus;
-      return (b.attributes.progress ?? 0) - (a.attributes.progress ?? 0);
-    });
+    return ids
+      .map((id) => hass.states[id])
+      .filter(Boolean)
+      .sort((a, b) => {
+        const byStatus =
+          (STATUS_ORDER[a.state] ?? 9) - (STATUS_ORDER[b.state] ?? 9);
+        if (byStatus !== 0) return byStatus;
+        return (b.attributes.progress ?? 0) - (a.attributes.progress ?? 0);
+      });
   }
 
   /** Find the appliance-level cycle counter sitting on the same device. */
@@ -136,36 +163,30 @@ class MaintenanceTrackerCard extends HTMLElement {
     if (this._config.counter_entity) return this._config.counter_entity;
 
     const registry = this._hass.entities || {};
-    const deviceId =
-      this._config.device ||
-      (tasks.length && registry[tasks[0].entity_id]
-        ? registry[tasks[0].entity_id].device_id
-        : null);
+    const deviceId = this._deviceId(tasks);
     if (!deviceId) return null;
 
-    const match = Object.values(this._hass.states).find((state) => {
-      const entry = registry[state.entity_id];
-      return (
-        entry &&
-        entry.device_id === deviceId &&
-        state.attributes &&
-        "cycle_in_progress" in state.attributes
-      );
-    });
-    return match ? match.entity_id : null;
+    return (
+      registryIds(this._hass, COUNTER_KEY).find(
+        (id) => registry[id] && registry[id].device_id === deviceId,
+      ) || null
+    );
+  }
+
+  /** The device this card is about, explicit or inferred from its tasks. */
+  _deviceId(tasks) {
+    if (this._config.device) return this._config.device;
+    const registry = this._hass.entities || {};
+    const first = tasks.length ? registry[tasks[0].entity_id] : null;
+    return first ? first.device_id : null;
   }
 
   _title(tasks) {
     if (this._config.title !== undefined) return this._config.title;
-    const registry = this._hass.devices || {};
-    const entityRegistry = this._hass.entities || {};
-    const deviceId =
-      this._config.device ||
-      (tasks.length && entityRegistry[tasks[0].entity_id]
-        ? entityRegistry[tasks[0].entity_id].device_id
-        : null);
-    if (deviceId && registry[deviceId]) {
-      return registry[deviceId].name_by_user || registry[deviceId].name;
+    const devices = this._hass.devices || {};
+    const deviceId = this._deviceId(tasks);
+    if (deviceId && devices[deviceId]) {
+      return devices[deviceId].name_by_user || devices[deviceId].name;
     }
     return "Maintenance";
   }
@@ -216,7 +237,8 @@ class MaintenanceTrackerCard extends HTMLElement {
 
     if (!tasks.length) {
       this._listEl.textContent =
-        "No maintenance task found. Add one from Settings → Devices & services.";
+        "No maintenance task found. Add an appliance and at least one task from " +
+        "Settings → Devices & services, or check that the integration loaded.";
       this._listEl.className = "mt-list mt-empty";
       return;
     }
@@ -280,19 +302,41 @@ class MaintenanceTrackerCard extends HTMLElement {
     root.append(top, bar, meta);
     if (!this._config.show_progress) bar.style.display = "none";
 
-    return { root, name, status, fill, bar, meta };
+    return { root, name, status, action, fill, bar, meta };
+  }
+
+  /** Name to show when the entity is unavailable and carries no attributes. */
+  _entityName(entityId) {
+    const entry = (this._hass.entities || {})[entityId];
+    const state = this._hass.states[entityId];
+    return (
+      (entry && entry.name) ||
+      (state && state.attributes.friendly_name) ||
+      entityId
+    );
   }
 
   _updateRow(row, task) {
     const attrs = task.attributes;
-    row.name.textContent = attrs.task;
-    row.status.textContent = STATUS_LABELS[task.state] || task.state;
-    row.status.className = `mt-status ${task.state}`;
-    row.root.className = `mt-row ${task.state}`;
+    const unavailable = isUnavailable(task);
+    const tone = unavailable ? "unavailable" : task.state;
 
-    const progress = Math.max(0, Math.min(attrs.progress ?? 0, 100));
+    row.name.textContent = attrs.task || this._entityName(task.entity_id);
+    row.status.textContent = STATUS_LABELS[task.state] || task.state;
+    row.status.className = `mt-status ${tone}`;
+    row.root.className = `mt-row ${tone}`;
+    row.action.disabled = unavailable;
+
+    const progress = unavailable
+      ? 0
+      : Math.max(0, Math.min(attrs.progress ?? 0, 100));
     row.fill.style.width = `${progress}%`;
-    row.fill.className = `mt-bar-fill ${task.state}`;
+    row.fill.className = `mt-bar-fill ${tone}`;
+
+    if (unavailable) {
+      row.meta.textContent = "Entity unavailable — check the Home Assistant log";
+      return;
+    }
 
     const remaining = remainingLabel(attrs);
     const serviced = `serviced ${relativeDate(attrs.last_service)}`;
@@ -393,15 +437,19 @@ class MaintenanceTrackerCard extends HTMLElement {
       .mt-status.ok { color: var(--secondary-text-color); }
       .mt-status.due_soon { color: var(--warning-color, #ffa600); }
       .mt-status.overdue { color: var(--error-color, #db4437); }
+      .mt-status.unavailable, .mt-status.unknown {
+        color: var(--disabled-text-color, #8c96a5);
+      }
 
       .mt-action {
         flex: none; display: grid; place-items: center; width: 32px; height: 32px;
         border: none; border-radius: 50%; cursor: pointer; background: none;
         color: var(--secondary-text-color);
       }
-      .mt-action:hover {
+      .mt-action:hover:not(:disabled) {
         background: var(--divider-color); color: var(--primary-text-color);
       }
+      .mt-action:disabled { opacity: .35; cursor: default; }
       .mt-action svg { width: 20px; height: 20px; fill: currentColor; }
 
       .mt-bar {
@@ -414,6 +462,7 @@ class MaintenanceTrackerCard extends HTMLElement {
       }
       .mt-bar-fill.due_soon { background: var(--warning-color, #ffa600); }
       .mt-bar-fill.overdue { background: var(--error-color, #db4437); }
+      .mt-bar-fill.unavailable, .mt-bar-fill.unknown { background: none; }
 
       .mt-meta {
         margin-top: 4px; font-size: .75rem; color: var(--secondary-text-color);

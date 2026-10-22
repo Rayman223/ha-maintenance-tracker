@@ -30,10 +30,15 @@ from .const import (
 
 
 def _parse_dt(value: Any) -> datetime | None:
-    """Parse a stored ISO timestamp, tolerating missing or corrupt values."""
+    """Parse a stored ISO timestamp, tolerating missing or corrupt values.
+
+    The result is always timezone aware: a naive value written by an older
+    build would otherwise poison every later comparison against "now".
+    """
     if not value:
         return None
-    return dt_util.parse_datetime(value)
+    parsed = dt_util.parse_datetime(value)
+    return dt_util.as_utc(parsed) if parsed else None
 
 
 def _dump_dt(value: datetime | None) -> str | None:
@@ -205,7 +210,10 @@ def compute_progress(
 
     days_since: float | None = None
     if task.last_service is not None:
-        days_since = max((now - task.last_service).total_seconds(), 0.0) / 86400
+        # Last line of defence: a naive timestamp reaching this subtraction
+        # raises, and a raising refresh takes every entity down with it.
+        last_service = dt_util.as_utc(task.last_service)
+        days_since = max((now - last_service).total_seconds(), 0.0) / 86400
 
     ratios: list[float] = []
     if limits.cycles:
