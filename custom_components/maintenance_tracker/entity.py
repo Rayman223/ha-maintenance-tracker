@@ -6,7 +6,7 @@ from datetime import datetime
 from typing import NoReturn
 
 from homeassistant.exceptions import ServiceValidationError
-from homeassistant.helpers.device_registry import DeviceEntryType, DeviceInfo
+from homeassistant.helpers import device_registry as dr
 from homeassistant.helpers.update_coordinator import CoordinatorEntity
 
 from .const import DOMAIN
@@ -25,12 +25,16 @@ class MaintenanceEntity(CoordinatorEntity[MaintenanceCoordinator]):
         entry = coordinator.config_entry
         self._attr_unique_id = f"{entry.entry_id}_{key}"
         self._attr_translation_key = key
-        self._attr_device_info = DeviceInfo(
+        # The appliance owns the shared device. Reuse its registry entry so a
+        # task entity does not move the device into its own config subentry.
+        self.device_entry = dr.async_get(coordinator.hass).async_get_or_create(
+            config_entry_id=entry.entry_id,
+            config_subentry_id=None,
             identifiers={(DOMAIN, entry.entry_id)},
             name=entry.title,
             manufacturer="Maintenance Tracker",
             model="Appliance",
-            entry_type=DeviceEntryType.SERVICE,
+            entry_type=dr.DeviceEntryType.SERVICE,
         )
 
     # Entity services are registered for a whole platform, so every sensor of
