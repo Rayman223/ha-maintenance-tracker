@@ -316,7 +316,11 @@ class MaintenanceCoordinator(DataUpdateCoordinator[MaintenanceData]):
 
         task.baseline_cycles = self._state.appliance.cycles
         task.baseline_runtime = self._state.appliance.runtime
-        task.last_service = serviced_at or dt_util.utcnow()
+        # `serviced_at` arrives from a service call as a naive datetime; treat
+        # it as local time, which is what the user typed.
+        task.last_service = (
+            dt_util.as_utc(serviced_at) if serviced_at else dt_util.utcnow()
+        )
         task.service_count += 1
         task.last_note = note
         task.notified = False

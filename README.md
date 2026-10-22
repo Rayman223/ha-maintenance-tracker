@@ -198,6 +198,8 @@ runtime, since there is no way to know whether the appliance kept running.
 
 ## Contributing
 
+Use Python 3.14 for the development checks, as in the GitHub Actions workflow.
+
 ```bash
 pip install -r requirements-dev.txt
 ruff check . && ruff format --check .

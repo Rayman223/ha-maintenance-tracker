@@ -1,5 +1,5 @@
-homeassistant>=2025.2.0
-pytest-homeassistant-custom-component>=0.13.200
+homeassistant>=2026.2.3
+pytest-homeassistant-custom-component>=0.13.316
 pytest-cov>=5.0.0
-ruff>=0.8.0
+ruff>=0.16.3
 pillow>=12.3.0
